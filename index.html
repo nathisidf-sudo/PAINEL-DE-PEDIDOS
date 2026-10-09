@@ -1078,5 +1078,220 @@ function ffProd(q){const raw=q.trim(),k=ffN(raw),dg=raw.replace(/\D/g,''),isCode
  window.ffRefresh=()=>{if(cur&&ffQ[cur])out.innerHTML=ffQ[cur]()};})();
 </script>
 
+<style>
+/* ===== Página inicial: Acompanhamento de Pedidos (sidebar + destaque) ===== */
+.appbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+.appbar .upd{display:flex;align-items:center;gap:10px;padding-right:16px;border-right:1px solid rgba(255,255,255,.2)}
+.appbar .upd svg{color:#00affa}
+.appbar .upd small,.appbar .usr small{display:block;font-size:11px;color:rgba(255,255,255,.7)}
+.appbar .upd b,.appbar .usr b{font-size:13px;color:#fff}
+.appbar .usr{display:flex;align-items:center;gap:10px}
+.appbar .av{width:38px;height:38px;border-radius:50%;background:#0050c8;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.home{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+.home>.hm{display:grid;gap:20px;min-width:0}
+@media (max-width:960px){.home{grid-template-columns:1fr}}
+.acp{background:var(--surface);border-radius:16px;box-shadow:0 0 0 1px var(--ring);overflow:hidden;position:sticky;top:12px}
+@media (max-width:960px){.acp{position:static}}
+.acp .ah{display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff;padding:12px 14px}
+.acp .ah .ic{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.acp .ah b{display:block;font-size:13px;letter-spacing:.04em}
+.acp .ah small{font-size:11px;opacity:.8}
+.acp .ah .tg{margin-left:auto;background:none;border:0;color:#fff;cursor:pointer;padding:4px}
+.acp.closed .grp{display:none}
+.grp{border-top:1px solid var(--grid)}
+.grp .gh{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;cursor:pointer;text-align:left;font:inherit;color:var(--ink);
+  background:color-mix(in srgb,var(--gc) 16%,var(--surface))}
+.grp.sel .gh{box-shadow:inset 4px 0 0 var(--gc)}
+.grp .gi{width:30px;height:30px;border-radius:8px;background:var(--gc);color:#fff;display:grid;place-items:center;flex:none}
+.grp .gt{font-weight:800;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;flex:1;min-width:0}
+.grp .gn{text-align:right;line-height:1.15}
+.grp .gn b{display:block;font-size:16px}
+.grp .gn span{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.grp .cv{transition:transform .15s;color:var(--muted);flex:none}
+.grp.col .cv{transform:rotate(-90deg)}
+.grp.col .rws{display:none}
+.rws{padding:4px 8px 8px 0}
+.rw{width:100%;display:grid;grid-template-columns:46px 26px minmax(0,1fr) auto 12px;align-items:center;gap:8px;padding:6px 6px 6px 4px;border:0;background:none;cursor:pointer;text-align:left;font:inherit;color:var(--ink);border-radius:10px}
+.rw:hover,.rw:focus-visible{background:var(--wash)}
+.rw.on{background:color-mix(in srgb,var(--rc) 14%,transparent)}
+.rw img{width:46px;height:46px;object-fit:cover;object-position:top;border-radius:10px}
+.rw .ri{width:26px;height:26px;border-radius:50%;background:var(--rc);color:#fff;display:grid;place-items:center}
+.rw .rl{font-size:11px;line-height:1.25;font-weight:600;text-transform:uppercase;letter-spacing:.02em;color:var(--ink-2)}
+.rw .rn{text-align:right;line-height:1.2}
+.rw .rn b{display:block;font-size:15px}
+.rw .rn span{font-size:11px!important}
+.rw .rn span{font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rw .ch{color:var(--muted)}
+.hero2{border-radius:18px;padding:18px 20px;background:linear-gradient(110deg,color-mix(in srgb,var(--gc) 16%,var(--surface)),var(--surface) 75%);box-shadow:0 0 0 1px var(--ring);display:grid;gap:14px}
+.hero2 .ht{display:flex;align-items:center;gap:12px}
+.hero2 .ht .gi{width:44px;height:44px;border-radius:50%;background:var(--gc);color:#fff;display:grid;place-items:center;flex:none}
+.hero2 h2{margin:0;font-size:22px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--ink)}
+.hero2 .hd{color:var(--ink-2);font-size:13px;margin-top:2px}
+.hrow{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.hrow>img{width:118px;height:150px;object-fit:cover;object-position:top;border-radius:14px;flex:none}
+.tile{flex:1 1 170px;background:var(--surface);border-radius:14px;box-shadow:0 0 0 1px var(--ring);padding:14px;display:flex;gap:10px;align-items:center}
+.tile .ti{width:38px;height:38px;border-radius:50%;background:color-mix(in srgb,var(--gc) 18%,transparent);color:var(--gc);display:grid;place-items:center;flex:none;font-weight:800;font-size:13px}
+.tile b{display:block;font-size:clamp(18px,2.1vw,24px);line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile span{font-size:12.5px;color:var(--ink-2)}
+.tile small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.hcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.hc{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;border-radius:14px;padding:10px;background:color-mix(in srgb,var(--rc) 10%,var(--surface));box-shadow:0 0 0 1px var(--ring);border:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.hc:hover,.hc:focus-visible{box-shadow:0 0 0 2px var(--rc)}
+.hc img{width:84px;height:104px;object-fit:cover;object-position:top;border-radius:10px}
+.hc .hh{display:flex;align-items:center;gap:8px;font-weight:800;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em}
+.hc .hh .ri{width:26px;height:26px;border-radius:50%;background:var(--rc);color:#fff;display:grid;place-items:center;flex:none}
+.hc .hh .ch{margin-left:auto;color:var(--muted)}
+.hc .n{font-size:20px;font-weight:800;margin-top:6px}
+.hc .n small{font-size:13px;font-weight:600}
+.hc .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.hc .p{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+.ask{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;border-top:1px solid rgba(255,255,255,.12);cursor:pointer;font:inherit;text-align:left;color:#fff;background:linear-gradient(90deg,#0050c8,#00affa)}
+.ask img{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;background:#fff;flex:none}
+.ask b{font-size:13px;letter-spacing:.04em;flex:1}
+.ask small{display:block;font-size:11px;font-weight:400;opacity:.9;letter-spacing:0}
+.ask .cv{transition:transform .15s}
+.ask[aria-expanded="true"] .cv{transform:rotate(180deg)}
+.acp.closed .ask{border-radius:0}
+.askp{background:linear-gradient(120deg,#04122e,#0a3a8c);border-radius:16px;padding:14px;box-shadow:0 0 0 1px var(--ring)}
+.askp[hidden]{display:none}
+.askp .ffq{margin:0}
+.ff.hm-ff{display:none!important}
+.hm-old{display:none!important}
+header{flex-wrap:wrap;height:auto!important;max-height:none!important;overflow:visible!important}
+.appbar{flex:1 1 100%}
+.appbar .usr small.role{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#00affa;font-weight:700}
+.btot{border-radius:16px;padding:16px 18px;background:linear-gradient(115deg,#04122e,#0a3a8c 70%,#0050c8);color:#fff;box-shadow:0 0 0 1px var(--ring);display:grid;gap:12px}
+.btot .bh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btot .bi{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.14);display:grid;place-items:center;flex:none}
+.btot .bt{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+.btot .bg{font-size:11px;background:#00affa;color:#04122e;border-radius:999px;padding:2px 9px;font-weight:800}
+.btot .bs{font-size:12px;color:rgba(255,255,255,.75);flex-basis:100%;margin-left:46px;margin-top:-6px}
+.btot .bk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.btot .k{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px}
+.btot .k small{display:block;font-size:11px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.05em}
+.btot .k b{display:block;font-size:clamp(18px,2vw,24px);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.2;margin-top:2px}
+.btot .k.m b{color:#7fd8ff}
+.btot .k em{font-style:normal;font-size:11.5px;color:rgba(255,255,255,.7)}
+.btot .bbar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.12);gap:2px}
+.btot .bbar>span{display:block;height:100%;flex:none}
+.btot .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:rgba(255,255,255,.85)}
+.btot .lg span{display:inline-flex;align-items:center;gap:6px}
+.btot .lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.btot .lg b{color:#fff}
+@media (max-width:640px){.appbar{justify-content:flex-start;margin-left:0}.appbar .upd{border-right:0;padding-right:0}}
+</style>
+<script>
+(()=>{
+const SV={
+ box:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>',
+ check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>',
+ puzzle:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10 3a2 2 0 0 1 4 0v2h4a1 1 0 0 1 1 1v4h-1a2 2 0 0 0 0 4h1v4a1 1 0 0 1-1 1h-4v-1a2 2 0 0 0-4 0v1H6a1 1 0 0 1-1-1v-4h1a2 2 0 0 0 0-4H5V6a1 1 0 0 1 1-1h4z"/></svg>',
+ alert:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 6v8M12 18v.5"/></svg>',
+ cube:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>',
+ refresh:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
+ doc:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 3h7l4 4v14H7zM10 12h5M10 16h5"/></svg>',
+ shield:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/></svg>',
+ cal:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+ card:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>',
+ ban:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/></svg>',
+ gift:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="9" width="16" height="12" rx="1"/><path d="M12 9v12M3 9h18M12 9c-2-4-6-4-6-1s6 1 6 1zm0 0c2-4 6-4 6-1s-6 1-6 1z"/></svg>',
+ brief:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V4h6v3"/></svg>',
+ clock:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+ home:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>',
+ tool:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 7a5 5 0 0 1-6.6 4.7L6 20.1 3.9 18l8.4-8.4A5 5 0 0 1 18.7 3l-3 3 2.3 2.3z"/></svg>',
+ chev:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 5l7 7-7 7"/></svg>',
+ down:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 9l7 7 7-7"/></svg>'
+};
+const ICN={'APTO':'check','APTO PARCIAL':'puzzle','INAPTO':'alert','SEM ESTOQUE':'cube','REFATURAMENTO':'refresh','EM ANÁLISE ADM VENDAS':'doc','FATURAMENTO SOPHOS (MSP)':'shield','DATA MÍNIMA MÊS SEGUINTE':'cal','AGUARDANDO CRÉDITO':'card','FORA DO ESCOPO':'ban','FORA DO BRIEFING':'brief','BONI / DEMO':'gift'};
+const G=[
+ {k:'at',t:'Pedidos em atendimento',d:'Pedidos liberados ou parcialmente liberados para faturamento.',c:'--good',i:'check',av:'hero',cs:['APTO','APTO PARCIAL']},
+ {k:'ac',t:'Precisa de ação',d:'Pendências de fluxo, cadastro ou estoque.',c:'--inapto',i:'tool',av:'inapto',cs:['INAPTO','SEM ESTOQUE']},
+ {k:'tr',t:'Em tratativa',d:'Refaturamento fica fora do backlog total; ADM e Sophos contam.',c:'--adm',i:'clock',av:'fora',cs:['REFATURAMENTO','EM ANÁLISE ADM VENDAS','FATURAMENTO SOPHOS (MSP)']},
+ {k:'ag',t:'Aguardando',d:'Mês seguinte e liberação de crédito.',c:'--cred',i:'cal',av:'dms',cs:['DATA MÍNIMA MÊS SEGUINTE','AGUARDANDO CRÉDITO']},
+ {k:'fr',t:'Não gera receita',d:'Escopo, briefing e remessas de bonificação ou demonstração.',c:'--muted',i:'home',av:'fora',cs:['FORA DO ESCOPO','FORA DO BRIEFING','BONI / DEMO']}
+];
+const INB=new Set(['APTO','APTO PARCIAL','INAPTO','SEM ESTOQUE','EM ANÁLISE ADM VENDAS','FATURAMENTO SOPHOS (MSP)','DATA MÍNIMA MÊS SEGUINTE','FORA DO ESCOPO']);
+let hs={g:'at',col:{},closed:false};
+try{Object.assign(hs,JSON.parse(localStorage.getItem('bkhome')||'{}'))}catch(e){}
+const hsave=()=>{try{localStorage.setItem('bkhome',JSON.stringify(hs))}catch(e){}};
+const av=k=>AVS[k]||AVS.hero;
+const avc=c=>av(AVK[c]||'fora');
+const UP='UPPER';
+const pc=(a,b)=>b?(a/b*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}):'0,0';
+
+// ---- montar estrutura ----
+const wrap=document.querySelector('.wrap'),hdr=wrap.querySelector('header');
+const meta=hdr.querySelector('.meta'),gm=(meta&&meta.textContent.match(/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/));
+const ab=document.createElement('div');ab.className='appbar';
+ab.innerHTML=`<div class="upd">${SV.cal.replace(/15/g,'22')}<div><small>Última atualização</small><b>${gm?gm[1]+' '+gm[2]:''}</b></div></div><div class="usr"><div class="av">NS</div><div><small class="role">Supervisora</small><b>Nathielli Santos</b><small>Administração de Vendas</small></div></div>`;
+hdr.appendChild(ab);
+const home=document.createElement('div');home.className='home';
+const side=document.createElement('aside');side.className='acp';side.setAttribute('aria-label','Acompanhamento de pedidos');
+const main=document.createElement('div');main.className='hm';
+const hero=document.createElement('section');hero.className='hero2';hero.setAttribute('aria-live','polite');
+home.append(side,main);
+const ff=wrap.querySelector('section.ff');
+wrap.insertBefore(home,ff);
+const askp=document.createElement('section');askp.className='askp';askp.id='askp';askp.hidden=!hs.ask;askp.setAttribute('aria-label','Pergunte para a FIFLOW');
+const ffq=document.getElementById('ffQ');if(ffq)askp.appendChild(ffq);
+const btot=document.createElement('div');btot.className='btot';btot.id='btot';btot.setAttribute('role','status');
+main.append(btot,askp,hero);
+['section.find','nav.views','#vGeral','#vFilial','#vSem','#vFat','section.rules'].forEach(s=>{const n=wrap.querySelector(':scope > '+s);if(n)main.appendChild(n)});
+if(ff){ff.classList.add('hm-ff');main.appendChild(ff)}
+['#kpis','#totz'].forEach(s=>{const n=document.querySelector(s);if(n)n.classList.add('hm-old')});
+
+function data(){
+  const rs=rows(),T=aggN(rs);
+  const CRr=st.grupo?CRED.filter(r=>r[4]===st.grupo):CRED;
+  const ALL=rs.concat(CRr,gF(BRF),gF(BND),gF(EMT)),TA=aggN(ALL);
+  const by={};Object.keys(ICN).forEach(c=>{by[c]=agg(ALL.filter(r=>r[7]===c))});
+  return {T,TA,by};
+}
+function goCls(c){
+  const g=G.find(x=>x.cs.includes(c));if(g)hs.g=g.k;hsave();
+  st.view='geral';st.tab=c;save();render();
+  const t=document.getElementById('tabs');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function sideH(D){
+  const S=hs.g;
+  side.className='acp'+(hs.closed?' closed':'');
+  side.innerHTML=`<div class="ah"><span class="ic">${SV.box}</span><div><b>ACOMPANHAMENTO DE PEDIDOS</b><small>Backlog · Administração de Vendas</small></div><button type="button" class="tg" aria-label="Recolher painel lateral" aria-expanded="${!hs.closed}">${SV.down}</button></div><button type="button" class="ask" aria-expanded="${!!hs.ask}" aria-controls="askp"><img src="${av('hero')}" alt=""><b>PERGUNTE PARA FIFLOW<small>Pedido, cliente, vendedor ou produto</small></b><span class="cv">${SV.down}</span></button>`+
+  G.map(g=>{const n=g.cs.reduce((a,c)=>a+D.by[c].n,0),v=g.cs.reduce((a,c)=>a+D.by[c].v,0);
+    return `<div class="grp${hs.col[g.k]?' col':''}${S===g.k?' sel':''}" style="--gc:var(${g.c})"><button type="button" class="gh" data-g="${g.k}" aria-expanded="${!hs.col[g.k]}"><span class="gi">${SV[g.i]}</span><span class="gt">${g.t}</span><span class="gn"><b>${nf(n)}</b><span>${brl(v)}</span></span><span class="cv">${SV.down}</span></button>
+    <div class="rws">${g.cs.map(c=>`<button type="button" class="rw${st.tab===c&&S===g.k?' on':''}" data-c="${c}" style="--rc:var(${COL[c]||'--fora'})" title="Ver pedidos: ${esc(LBL[c]||c)}"><img src="${avc(c)}" alt=""><span class="ri">${SV[ICN[c]]}</span><span class="rl">${esc(LBL[c]||c)}</span><span class="rn"><b>${nf(D.by[c].n)}</b><span>${brl(D.by[c].v)}</span></span><span class="ch">${SV.chev}</span></button>`).join('')}</div></div>`}).join('');
+  side.querySelector('.ask').onclick=()=>{hs.ask=!hs.ask;hsave();const P=document.getElementById('askp');P.hidden=!hs.ask;home_();if(hs.ask){P.scrollIntoView({behavior:'smooth',block:'start'});const i=document.getElementById('ffIn');if(i)setTimeout(()=>i.focus({preventScroll:true}),300)}};
+  side.querySelector('.tg').onclick=()=>{hs.closed=!hs.closed;hsave();home_()};
+  side.querySelectorAll('.gh').forEach(b=>b.onclick=()=>{const k=b.dataset.g;if(hs.g===k)hs.col[k]=!hs.col[k];else{hs.g=k;hs.col[k]=false}hsave();home_()});
+  side.querySelectorAll('.rw').forEach(b=>b.onclick=()=>goCls(b.dataset.c));
+}
+function heroH(D){
+  const g=G.find(x=>x.k===hs.g)||G[0];
+  const n=g.cs.reduce((a,c)=>a+D.by[c].n,0),v=g.cs.reduce((a,c)=>a+D.by[c].v,0);
+  const allIn=g.cs.every(c=>INB.has(c));
+  const base=allIn?D.T:D.TA,bl=allIn?'do backlog total':'do arquivo completo';
+  const vl=g.k==='at'?'Valor liberado':'Valor total';
+  hero.style.setProperty('--gc',`var(${g.c})`);
+  hero.innerHTML=`<div class="ht"><span class="gi">${SV[g.i].replace(/15|16/g,'22')}</span><div><h2>${g.t}</h2><div class="hd">${esc(g.d)}</div></div></div>
+   <div class="hrow"><img src="${av(g.av)}" alt="FIFLOW">
+    <div class="tile"><span class="ti">${SV.box}</span><div><b>${nf(n)}</b><span>Pedidos</span><small>${pc(n,base.n)}% dos pedidos ${bl}</small></div></div>
+    <div class="tile"><span class="ti">R$</span><div><b>${brl(v).replace('R$','').trim()}</b><span>${vl}</span><small>${pc(v,base.v)}% do valor ${bl}</small></div></div></div>
+   <div class="hcards">${g.cs.map(c=>{const a=D.by[c],b=INB.has(c)?D.T:D.TA,l=INB.has(c)?'':' (arquivo completo)';
+     return `<button type="button" class="hc" data-c="${c}" style="--rc:var(${COL[c]||'--fora'})" title="${esc(FQ[c]||'')}"><img src="${avc(c)}" alt=""><div><div class="hh"><span class="ri">${SV[ICN[c]]}</span>${esc(LBL[c]||c)}<span class="ch">${SV.chev}</span></div>
+      <div class="n">${nf(a.n)} <small>pedidos</small></div><div class="v">${brl(a.v)}</div><div class="p">${pc(a.n,b.n)}% dos pedidos${l} · ${pc(a.v,b.v)}% do valor total${l}</div></div></button>`}).join('')}</div>`;
+  hero.querySelectorAll('.hc').forEach(b=>b.onclick=()=>goCls(b.dataset.c));
+}
+function totH(D){const g=x=>st.grupo?x.filter(r=>r[4]===st.grupo):x;
+  const P=[['Backlog total','#ffffff',D.T],['Aguardando crédito','var(--cred)',aggN(g(CRED))],['Fora do briefing','var(--brf)',aggN(g(BRF))],['Refaturamento','var(--ref)',aggN(g(EMT))],['Boni / Demo','var(--bon)',aggN(g(BND))]];
+  const F=P.reduce((a,p)=>({n:a.n+p[2].n,v:a.v+p[2].v}),{n:0,v:0}),q=st.m==='qtd'?'n':'v';
+  const pc=(a,b)=>b?(a/b*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0';
+  btot.innerHTML=`<div class="bh"><span class="bi">${SV.box}</span><span class="bt">Backlog total</span>${st.grupo?`<span class="bg">${esc(st.grupo)}</span>`:''}<span class="bs">Sem crédito, fora do briefing, boni/demo e refaturamento</span></div>
+  <div class="bk"><div class="k m"><small>Pedidos no backlog</small><b>${nf(D.T.n)}</b><em>${pc(D.T.n,F.n)}% do arquivo completo</em></div>
+   <div class="k m"><small>Valor do backlog</small><b>${brl(D.T.v)}</b><em>${pc(D.T.v,F.v)}% do arquivo completo</em></div></div>`}
+function home_(){const D=data();totH(D);sideH(D);heroH(D)}
+window.home_=home_;
+const _r=render;render=function(){_r.apply(this,arguments);home_()};
+home_();
+})();
+</script>
 
 </body></html>
