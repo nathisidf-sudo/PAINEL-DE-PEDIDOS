@@ -429,7 +429,7 @@ header h1 .ffh{font-weight:800;letter-spacing:.02em}header h1 .ffh span{color:#2
 </section>
 <section class="panel">
   <h2>Pedidos sem estoque</h2>
-  <div class="ctl"><input type="search" id="semQ" placeholder="Buscar pedido, proposta, cliente ou vendedor" style="flex:1 1 280px"></div>
+  <div class="ctl"><input type="search" id="semQ" placeholder="Buscar pedido, proposta, cliente ou vendedor" style="flex:1 1 280px"><button type="button" class="btn ghost" id="semDl" hidden>Baixar Excel</button></div>
   <div class="fchips" id="semChips"></div><div class="tbl"><table id="tSem" style="min-width:0;font-size:12.5px"><thead><tr></tr></thead><tbody></tbody></table></div>
   <div class="count" id="semC"></div>
 </section>
@@ -904,12 +904,16 @@ function sheetFat(X){
 const slug=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
 const shn=s=>s.replace(/[\\\/?*:\[\]]/g,'-').slice(0,31);
 async function baixar(modo){
-  const msg=document.getElementById('dlMsg'),btns=[...document.querySelectorAll('#dlAll,#dlTab')];
+  const msg=document.getElementById('dlMsg'),btns=[...document.querySelectorAll('#dlAll,#dlTab,#semDl')];
   btns.forEach(b=>b.disabled=true);msg.textContent='Preparando o Excel…';
   try{
     const X=await loadXLSX(),wb=X.utils.book_new(),base=slug('Backlog FIFO 30')+(st.grupo?'_'+slug(st.grupo):'');
     let fn;
-    if(modo==='lista'){const rs=tabRows();
+    if(modo==='sem'){const g=SCOL[ssk][1],rs=semBase(-1).sort((a,b)=>{const x=g(a),y=g(b);return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR',{numeric:true}))*ssd});
+      const ws=X.utils.aoa_to_sheet([SCOL.map(c=>c[0]),...rs.map(r=>SCOL.map(c=>c[2]?+(+r[8]).toFixed(2):c[1](r)))]);
+      ws['!cols']=[10,10,7,38,28,24,24,40,24,30,20,16].map(w=>({wch:w}));for(let i=2;i<=rs.length+1;i++){const c=ws['L'+i];if(c)c.z='"R$" #,##0.00'}
+      ws['!autofilter']={ref:'A1:L'+(rs.length+1)};X.utils.book_append_sheet(wb,ws,'Sem estoque');fn=base+'_Sem_estoque.xlsx'}
+    else if(modo==='lista'){const rs=tabRows();
       X.utils.book_append_sheet(wb,sheetPed(X,rs),shn(LBL[st.tab]));fn=base+'_'+slug(LBL[st.tab])+'.xlsx'}
     else{const rs=rows();X.utils.book_append_sheet(wb,sheetResumo(X,rs),'Resumo');
       X.utils.book_append_sheet(wb,sheetFilial(X,rs),'Por filial');
@@ -922,7 +926,7 @@ async function baixar(modo){
   finally{btns.forEach(b=>b.disabled=false)}
 }
 (async()=>{for(let i=0;i<50&&!(window.claude&&window.claude.use);i++)await new Promise(r=>setTimeout(r,100));try{DL=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){DL=null}
-  if(DL||!(window.claude)){document.getElementById('dlAll').hidden=false;document.getElementById('dlAll').onclick=()=>baixar('tudo');const b=document.getElementById('dlTab');if(b)b.hidden=false}})();
+  if(DL||!(window.claude)){document.getElementById('dlAll').hidden=false;document.getElementById('dlAll').onclick=()=>baixar('tudo');const b=document.getElementById('dlTab');if(b)b.hidden=false;const sb=document.getElementById('semDl');if(sb){sb.hidden=false;sb.onclick=()=>baixar('sem')}}})();
 (function(){const K='fiflow_tema',bs=[...document.querySelectorAll('[data-tema]')];
  const ap=(t,redraw)=>{if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');
   bs.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tema===t)));if(redraw){try{render()}catch(e){}}};
