@@ -195,7 +195,7 @@ th{background:#eef3f9;color:var(--navy)}
 .ff .tg{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#0050c8;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 10px;vertical-align:middle}
 .ff .say{font-size:15px;margin-top:8px;color:#eaf4ff}.ff .say b{color:#fff}
 .ff .sub2{font-size:12.5px;color:#bfe0ff;margin-top:4px;font-style:italic}
-.ffq{margin-top:12px;display:grid;gap:8px}
+.ffq{margin-top:12px;display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}.ffq>*{min-width:0}
 .ffq .ffb{max-width:100%;white-space:normal}
 .ffb ul{margin:4px 0 0;padding-left:18px}.ffb table{min-width:0;width:auto;font-size:12.5px;margin-top:6px}.ffb th{position:static;background:#eef3f9;cursor:default;font-size:10.5px;padding:5px 8px}.ffb td{padding:4px 8px}.ffb tr.t td{font-weight:700;border-top:2px solid #c4cddb}.ffb .tw{overflow-x:auto}.ffb li{margin:2px 0}
 .ffsug button[aria-pressed=true]{background:#fff;color:#04122e}
@@ -319,6 +319,10 @@ header h1 .ffh{font-weight:800;letter-spacing:.02em}header h1 .ffh span{color:#2
       <form class="ffrow" id="ffForm2" autocomplete="off">
         <input id="ffIn2" type="search" placeholder="Vendedor ou cliente: a FIFLOW mostra o resumo" aria-label="Vendedor ou cliente">
         <button type="submit" class="btn">Ver resumo</button>
+      </form>
+      <form class="ffrow" id="ffForm3" autocomplete="off">
+        <input id="ffIn3" type="search" placeholder="EAN ou descrição do produto: a FIFLOW mostra os pedidos alocados" aria-label="EAN ou descrição do produto">
+        <button type="submit" class="btn">Buscar produto</button>
       </form>
       <div class="ffb a" id="ffOut" hidden aria-live="polite"></div>
     </div>
@@ -991,6 +995,24 @@ function ffPed(q){const k=nz(q.trim());if(!k)return'';const rs=D0.filter(r=>nz(r
   return `<b>Pedido ${esc(r[2])}</b> · proposta ${esc(r[1])} · filial ${esc(r[0])} · ${esc(r[3])} (${esc(r[4])}) · ${brl(r[8])}<br>Está <b>${esc(LBL[r[7]]||r[7])}</b> porque ${FF_WHY[r[7]]||'tem um status fora das regras.'}`+
    (r[7]==='APTO PARCIAL'?`<br>Liberado: ${brl(r[12]||0)} · pendente: ${brl(r[8]-(r[12]||0))}.`:'')+
    (pend.length&&r[7]!=='APTO'?`<br>Itens pendentes (${nf(pend.length)} de ${nf(it.length)}):<ul>${pend.slice(0,8).map(i=>`<li>Item ${esc(i[0])} · ${esc(String(i[2]).slice(0,60))} · ${brl(i[4])} · ${esc(i[5])}${i[8]?' · previsão '+esc(fdt8(String(i[8]))):''}${i[9]?' · SC '+esc(i[9]):''}${i[10]?' · OP '+esc(i[10]):''}</li>`).join('')}${pend.length>8?'<li>…</li>':''}</ul>`:'')}).join('<hr style="border:0;border-top:1px solid var(--grid)">')}
+const FF_ORD=['APTO','APTO PARCIAL','INAPTO','DATA MÍNIMA MÊS SEGUINTE','SEM ESTOQUE','AGUARDANDO CRÉDITO','FORA DO ESCOPO','FORA DO BRIEFING','STATUS NÃO CLASSIFICADO'];
+function ffProd(q){const raw=q.trim(),k=ffN(raw),dg=raw.replace(/\D/g,''),isCode=/^\d{4,}$/.test(raw.replace(/\s/g,''));
+ if(k.length<3)return 'Digite pelo menos 3 caracteres do EAN ou da descrição do produto.';
+ const ws=k.split(/\s+/).filter(Boolean),L=[];
+ D0.forEach(r=>(r[13]||[]).forEach(i=>{const cod=String(i[1]??''),ds=ffN(i[2]);
+  const ok=isCode?(cod===dg||cod.includes(dg)||ds.includes(dg)):(ws.every(w=>ds.includes(w))||ffN(cod).includes(k));if(ok)L.push([r,i])}));
+ if(!L.length)return `Não achei <b>${esc(q)}</b> como EAN ou descrição de produto neste backlog.`;
+ const prods=[...new Map(L.map(([r,i])=>[String(i[1]),i[2]])).entries()],peds=new Set(L.map(([r])=>r[1]+'|'+r[2]));
+ const qt=L.reduce((a,[r,i])=>a+(typeof i[3]==='number'?i[3]:0),0),vt=L.reduce((a,[r,i])=>a+(+i[4]||0),0);
+ const by={};L.forEach(([r,i])=>{const o=by[r[7]]||(by[r[7]]={p:new Set(),q:0,v:0});o.p.add(r[1]+'|'+r[2]);o.q+=typeof i[3]==='number'?i[3]:0;o.v+=+i[4]||0});
+ L.sort((a,b)=>FF_ORD.indexOf(a[0][7])-FF_ORD.indexOf(b[0][7])||String(a[0][2]).localeCompare(String(b[0][2]))||String(a[1][0]).localeCompare(String(b[1][0])));
+ const th=(x,n)=>`<th${n?' class="num"':''} style="white-space:nowrap">${x}</th>`,td=(x,n,w)=>`<td${n?' class="num"':''} style="${w?'min-width:'+w+'px;white-space:normal':'white-space:nowrap'}">${x}</td>`;
+ const tb=`<div class="tw" style="max-height:380px;overflow:auto"><table style="min-width:1400px"><thead><tr>${['Pedido','Proposta','Filial','Cliente','Item','EAN','Descrição','Qtd','Valor','Status logística','Classificação','Previsão / SC / OP','Grupo','Vendedor'].map((x,j)=>th(x,j===7||j===8)).join('')}</tr></thead><tbody>${L.map(([r,i])=>`<tr>${[esc(r[2]),esc(r[1]),esc(r[0]),esc(r[3]),esc(i[0]),esc(i[1]),esc(String(i[2]).slice(0,70)),(typeof i[3]==="number"?nf(i[3]):esc(i[3])),brl(+i[4]||0),esc(i[5]),`<b>${esc(LBL[r[7]]||r[7])}</b>`,[i[8]?'prev. '+esc(fdt8(String(i[8]))):'',i[9]?'SC '+esc(i[9]):'',i[10]?'OP '+esc(i[10]):''].filter(Boolean).join(' · '),esc(r[4]),esc(r[5])].map((x,j)=>td(x,j===7||j===8,j===3?150:j===6?210:j===11?160:0)).join('')}</tr>`).join('')}<tr class="t">${td('Total')}${td('')}${td('')}${td(nf(peds.size)+' pedidos')}${td('')}${td('')}${td(nf(L.length)+' linhas')}${td(nf(qt),1)}${td(brl(vt),1)}${td('')}${td('')}${td('')}${td('')}${td('')}</tr></tbody></table></div>`;
+ const ord=FF_ORD.filter(c=>by[c]);
+ return `${prods.length===1&&isCode?'':'<b>'+esc(q)+'</b> · '}${prods.length===1?`EAN <b>${esc(prods[0][0])}</b> · ${esc(prods[0][1])}`:`${nf(prods.length)} produtos encontrados, ex.: ${prods.slice(0,3).map(([c,d])=>esc(c)+' · '+esc(String(d).slice(0,40))).join(' | ')}`}`+
+  `<br>Alocado em <b>${nf(peds.size)} pedidos</b> (${nf(L.length)} linhas) · <b>${nf(qt)} un.</b> · <b>${brl(vt)}</b>`+
+  ffTbl(['Classificação','Pedidos','Qtd','Valor'],ord.map(c=>[esc(LBL[c]||c),nf(by[c].p.size),nf(by[c].q),brl(by[c].v)]),['Total',nf(peds.size),nf(qt),brl(vt)])+
+  `<b>Pedidos alocados</b>`+tb}
 (()=>{const sug=document.getElementById('ffSug'),out=document.getElementById('ffOut');let cur=null;
  const Q=[['lib','Quanto está liberado para faturar?'],['fil','Aptos por filial'],['gfd','Aptos por grupo x faturado do dia'],['fat','Faturado de hoje'],['fmes','Faturado do mês'],['fxl','Faturado x liberado'],['ina','Maiores inaptos']];
  const show=(k,h)=>{cur=k;out.hidden=false;out.innerHTML=h;sug.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k))};
@@ -998,6 +1020,7 @@ function ffPed(q){const k=nz(q.trim());if(!k)return'';const rs=D0.filter(r=>nz(r
  sug.querySelectorAll('button').forEach(b=>b.onclick=()=>cur===b.dataset.k?(cur=null,out.hidden=true,b.setAttribute('aria-pressed','false')):show(b.dataset.k,ffQ[b.dataset.k]()));
  document.getElementById('ffForm').onsubmit=e=>{e.preventDefault();const v=document.getElementById('ffIn').value;if(v.trim())show('ped',ffPed(v))};
  document.getElementById('ffForm2').onsubmit=e=>{e.preventDefault();const v=document.getElementById('ffIn2').value;if(v.trim())show('vc',ffVC(v))};
+ document.getElementById('ffForm3').onsubmit=e=>{e.preventDefault();const v=document.getElementById('ffIn3').value;if(v.trim())show('prod',ffProd(v))};
  window.ffRefresh=()=>{if(cur&&ffQ[cur])out.innerHTML=ffQ[cur]()};})();
 </script>
 
