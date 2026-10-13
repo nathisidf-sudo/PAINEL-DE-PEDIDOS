@@ -295,6 +295,8 @@ header h1 .ffh{font-weight:800;letter-spacing:.02em}header h1 .ffh span{color:#2
 .kmr{font-size:11px;color:var(--muted)}
 :root:not([data-theme="light"]) .kbt,:root[data-theme="dark"] .kbt{border-color:#2c3442}
 @media (max-width:700px){.kgc{grid-template-columns:minmax(0,1fr)!important}.kg{min-width:100%}}
+.fstack{display:flex;flex-direction:column;gap:8px;align-self:flex-start}.fstack select{width:100%}
+.btot .fper{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:12px;color:rgba(255,255,255,.8);margin-top:2px}.btot .fper>span{text-transform:uppercase;letter-spacing:.05em;font-size:11px}.btot .fper label{display:flex;align-items:center;gap:6px}.btot .fper input{font:inherit;font-size:13px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:8px;padding:5px 8px;color-scheme:dark}.btot .fper button{font:inherit;font-size:12px;background:transparent;color:#7fd8ff;border:1px solid rgba(127,216,255,.5);border-radius:8px;padding:4px 10px;cursor:pointer}header .filters{flex:1 1 100%}header .filters .appbar{flex:0 1 auto;margin-left:auto}header .filters #dlAll{align-self:center!important;margin-top:19px}header .filters .appbar{align-self:center;margin-top:19px}@media (max-width:900px){header .filters .appbar{flex:1 1 100%;margin-left:0;justify-content:flex-start}}
 </style>
 <div class="wrap">
 <header>
@@ -307,9 +309,14 @@ header h1 .ffh{font-weight:800;letter-spacing:.02em}header h1 .ffh span{color:#2
     </div>
   </div>
   <div class="filters">
+    <div class="fstack">
     <label class="f" for="fGrupo">Grupo
       <select id="fGrupo"><option value="">Todos os grupos</option></select>
     </label>
+    <label class="f" for="fVend">Vendedor
+      <select id="fVend"><option value="">Todos os vendedores</option></select>
+    </label>
+    </div>
     <div class="f" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;flex-direction:column;gap:4px">Medida
       <div class="seg" role="group" aria-label="Medida">
         <button type="button" id="mValor" aria-pressed="true">Valor</button>
@@ -566,6 +573,57 @@ const GROUPS=[...new Set(D.map(r=>r[4]))].sort((a,b)=>D.filter(r=>r[4]===b).leng
 const sel=document.getElementById('fGrupo');
 GROUPS.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o)});
 sel.value=st.grupo; sel.onchange=()=>{st.grupo=sel.value;save();render()};
+/* ===== Filtro por vendedor (backlog + faturado) ===== */
+const VN=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z ]/g,' ').trim().replace(/\s+/g,' ');
+const VSTOP=new Set(['DA','DE','DO','DOS','DAS','E']);
+const vtk=s=>VN(s).split(' ').filter(w=>w&&!VSTOP.has(w));
+const vtq=(a,b)=>a===b||(a.length>=4&&b.startsWith(a))||(b.length>=4&&a.startsWith(b))||(a.length>=6&&b.length>=6&&a.slice(0,6)===b.slice(0,6));
+function vSub(sh,full){const a=vtk(sh),b=vtk(full);if(!a.length||!b.length||a[0]!==b[0])return false;let j=0;for(const t of a){while(j<b.length&&!vtq(t,b[j]))j++;if(j>=b.length)return false;j++}return true}
+const VORIG={D:D.slice(),CRED:CRED.slice(),BRF:BRF.slice(),BND:BND.slice(),EMT:EMT.slice(),FAT:FAT.slice()};
+const VBL=[...new Set(D0.map(r=>r[5]).filter(Boolean))];
+const VKEY=new Map(),VDN=new Map();
+VBL.forEach(n=>{VKEY.set(n,VN(n));if(!VDN.has(VN(n)))VDN.set(VN(n),n)});
+[...new Set(FAT.map(r=>r[7]).filter(Boolean))].forEach(n=>{
+  let k=VN(n);if(!VBL.some(b=>VN(b)===k)){const c=VBL.filter(b=>vSub(b,n));if(c.length){const mx=Math.max(...c.map(b=>vtk(b).length)),best=c.filter(b=>vtk(b).length===mx);if(best.length===1)k=VN(best[0])}}
+  VKEY.set(n,k);const cur=VDN.get(k);if(!cur||n.length>cur.length)VDN.set(k,n)});
+const vk=n=>VKEY.get(n)||VN(n);
+const VDISP=k=>VDN.get(k)||k;
+try{st.vend=localStorage.getItem('bkpainel_v')||''}catch(e){st.vend=''}
+function applyV(){const k=st.vend;[['D',5],['CRED',5],['BRF',5],['BND',5],['EMT',5],['FAT',7]].forEach(([n,i])=>{const A={D,CRED,BRF,BND,EMT,FAT}[n];A.length=0;VORIG[n].forEach(r=>{if(!k||vk(r[i])===k)A.push(r)})})}
+const selV=document.getElementById('fVend');
+function vopts(){
+  const g=st.grupo,ks=new Map();
+  ['D','CRED','BRF','BND','EMT'].forEach(n=>VORIG[n].forEach(r=>{if(!g||r[4]===g){const k=vk(r[5]);if(r[5])ks.set(k,(ks.get(k)||0)+1)}}));
+  VORIG.FAT.forEach(r=>{if(r[7]&&(!g||r[2]===g)){const k=vk(r[7]);if(!ks.has(k))ks.set(k,0)}});
+  if(st.vend&&!ks.has(st.vend)){st.vend='';try{localStorage.setItem('bkpainel_v','')}catch(e){}applyV()}
+  const L=[...ks.keys()].sort((a,b)=>VDISP(a).localeCompare(VDISP(b),'pt-BR'));
+  selV.innerHTML='<option value="">Todos os vendedores</option>'+L.map(k=>`<option value="${esc(k)}">${esc(VDISP(k))}</option>`).join('');
+  selV.value=st.vend||'';
+}
+selV.onchange=()=>{st.vend=selV.value;try{localStorage.setItem('bkpainel_v',st.vend)}catch(e){}applyV();render()};
+applyV();
+{const _rv=render;render=function(){vopts();return _rv.apply(this,arguments)}}
+/* ===== Faturado: período (data início / fim) ===== */
+const FD_ALL=()=>[...new Set((typeof VORIG!=='undefined'?VORIG.FAT:FAT).map(r=>r[0]))].sort();
+try{const s=JSON.parse(localStorage.getItem('bkpainel_d')||'{}');st.fi=s.fi||'';st.ff=s.ff||''}catch(e){st.fi='';st.ff=''}
+function fdRange(){const ds=FD_ALL();if(!ds.length)return null;const last=ds[ds.length-1],first=ds[0];
+  let fi=st.fi||last.slice(0,8)+'01',ff=st.ff||last;if(fi<first.slice(0,8)+'01')fi=first.slice(0,8)+'01';if(fi>ff){const t=fi;fi=ff;ff=t}return {fi,ff,min:first,max:last}}
+const fdd=d=>d.slice(8,10)+'/'+d.slice(5,7);
+function fatTiles(){
+  if(typeof FAT==='undefined'||!FD_ALL().length)return '';
+  const R=fdRange(),fm=FAT.filter(r=>(!st.grupo||r[2]===st.grupo)&&r[0]>=R.fi&&r[0]<=R.ff);
+  const ds=FD_ALL().filter(d=>d>=R.fi&&d<=R.ff),ld=ds.length?ds[ds.length-1]:R.ff;
+  const nP=new Set(fm.filter(r=>!r[5]).map(r=>r[3])).size,vF=fm.reduce((s,r)=>s+r[4],0);
+  const fd=fm.filter(r=>r[0]===ld),nD=new Set(fd.filter(r=>!r[5]).map(r=>r[3])).size,vD=fd.reduce((s,r)=>s+r[4],0);
+  const pc=(a,b)=>b?(a/b*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0';
+  const mes=R.fi.slice(8)==='01'&&R.fi.slice(0,7)===R.ff.slice(0,7)&&R.ff===R.max;
+  return `<div class="fper"><span>Período do faturado</span><label>Início <input type="date" id="fdIni" value="${R.fi}" min="${R.min.slice(0,8)}01" max="${R.max}"></label><label>Fim <input type="date" id="fdFim" value="${R.ff}" min="${R.min.slice(0,8)}01" max="${R.max}"></label>${(st.fi||st.ff)?'<button type="button" id="fdLimpa">Mês inteiro</button>':''}</div>
+  <div class="k m"><small>Faturado no dia · ${fdd(ld)}</small><b>${brl(vD)}</b><em>${nf(nD)} pedidos · ${pc(vD,vF)}% do período</em></div><div class="k m"><small>${mes?'Faturado no mês':'Faturado no período · '+fdd(R.fi)+' a '+fdd(R.ff)}</small><b>${brl(vF)}</b><em>${nf(nP)} pedidos · ${ds.length} dias faturados · ${fdd(R.fi)} a ${fdd(R.ff)}</em></div>`}
+function fdSave(){try{localStorage.setItem('bkpainel_d',JSON.stringify({fi:st.fi,ff:st.ff}))}catch(e){}window.home_&&window.home_()}
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='fdIni'){st.fi=t.value;fdSave()}else if(t.id==='fdFim'){st.ff=t.value;fdSave()}});
+document.addEventListener('click',e=>{if(e.target.id==='fdLimpa'){st.fi='';st.ff='';fdSave()}});
+
+
 const bV=document.getElementById('mValor'),bQ=document.getElementById('mQtd');
 bV.onclick=()=>{st.m='valor';save();render()}; bQ.onclick=()=>{st.m='qtd';save();render()};
 const tip=document.getElementById('tip');
@@ -1226,7 +1284,7 @@ const wrap=document.querySelector('.wrap'),hdr=wrap.querySelector('header');
 const meta=hdr.querySelector('.meta'),gm=(meta&&meta.textContent.match(/(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/));
 const ab=document.createElement('div');ab.className='appbar';
 ab.innerHTML=`<div class="upd">${SV.cal.replace(/15/g,'22')}<div><small>Última atualização</small><b>${gm?gm[1]+' '+gm[2]:''}</b></div></div><div class="usr"><div class="av">NS</div><div><small class="role">Supervisora</small><b>Nathielli Santos</b><small>Administração de Vendas</small></div></div>`;
-hdr.appendChild(ab);
+(hdr.querySelector('.filters')||hdr).appendChild(ab);
 const home=document.createElement('div');home.className='home';
 const side=document.createElement('aside');side.className='acp';side.setAttribute('aria-label','Acompanhamento de pedidos');
 const main=document.createElement('div');main.className='hm';
@@ -1286,9 +1344,9 @@ function totH(D){const g=x=>st.grupo?x.filter(r=>r[4]===st.grupo):x;
   const P=[['Backlog total','#ffffff',D.T],['Aguardando crédito','var(--cred)',aggN(g(CRED))],['Fora do briefing','var(--brf)',aggN(g(BRF))],['Refaturamento','var(--ref)',aggN(g(EMT))],['Boni / Demo','var(--bon)',aggN(g(BND))]];
   const F=P.reduce((a,p)=>({n:a.n+p[2].n,v:a.v+p[2].v}),{n:0,v:0}),q=st.m==='qtd'?'n':'v';
   const pc=(a,b)=>b?(a/b*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0';
-  btot.innerHTML=`<div class="bh"><span class="bi">${SV.box}</span><span class="bt">Backlog total</span>${st.grupo?`<span class="bg">${esc(st.grupo)}</span>`:''}<span class="bs">Sem crédito, fora do briefing, boni/demo e refaturamento</span></div>
+  btot.innerHTML=`<div class="bh"><span class="bi">${SV.box}</span><span class="bt">Backlog total</span>${st.grupo?`<span class="bg">${esc(st.grupo)}</span>`:''}${st.vend?`<span class="bg">${esc(VDISP(st.vend))}</span>`:''}<span class="bs">Sem crédito, fora do briefing, boni/demo e refaturamento</span></div>
   <div class="bk"><div class="k m"><small>Pedidos no backlog</small><b>${nf(D.T.n)}</b><em>${pc(D.T.n,F.n)}% do arquivo completo</em></div>
-   <div class="k m"><small>Valor do backlog</small><b>${brl(D.T.v)}</b><em>${pc(D.T.v,F.v)}% do arquivo completo</em></div>${(()=>{if(typeof FAT==='undefined'||!FAT.length)return '';const fm=FAT.filter(r=>!st.grupo||r[2]===st.grupo),ds=[...new Set(FAT.map(r=>r[0]))].sort(),ld=ds[ds.length-1],nP=new Set(fm.filter(r=>!r[5]).map(r=>r[3])).size,vF=fm.reduce((s,r)=>s+r[4],0);const fd=fm.filter(r=>r[0]===ld),nD=new Set(fd.filter(r=>!r[5]).map(r=>r[3])).size,vD=fd.reduce((s,r)=>s+r[4],0);return `<div class="k m"><small>Faturado no dia · ${ld.slice(8,10)}/${ld.slice(5,7)}</small><b>${brl(vD)}</b><em>${nf(nD)} pedidos · ${pc(vD,vF)}% do mês</em></div><div class="k m"><small>Faturado no mês</small><b>${brl(vF)}</b><em>${nf(nP)} pedidos · ${ds.length} dias faturados · até ${ld.slice(8,10)}/${ld.slice(5,7)}</em></div>`})()}</div>`}
+   <div class="k m"><small>Valor do backlog</small><b>${brl(D.T.v)}</b><em>${pc(D.T.v,F.v)}% do arquivo completo</em></div>${fatTiles()}</div>`}
 function home_(){const D=data();totH(D);sideH(D);heroH(D)}
 window.home_=home_;
 const _r=render;render=function(){_r.apply(this,arguments);home_()};
