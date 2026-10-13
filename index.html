@@ -1166,7 +1166,8 @@ header{flex-wrap:wrap;height:auto!important;max-height:none!important;overflow:v
 .btot .bt{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
 .btot .bg{font-size:11px;background:#00affa;color:#04122e;border-radius:999px;padding:2px 9px;font-weight:800}
 .btot .bs{font-size:12px;color:rgba(255,255,255,.75);flex-basis:100%;margin-left:46px;margin-top:-6px}
-.btot .bk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.btot .bk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.btot .bk{grid-template-columns:1fr}}
 .btot .k{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px}
 .btot .k small{display:block;font-size:11px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.05em}
 .btot .k b{display:block;font-size:clamp(18px,2vw,24px);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.2;margin-top:2px}
@@ -1287,7 +1288,7 @@ function totH(D){const g=x=>st.grupo?x.filter(r=>r[4]===st.grupo):x;
   const pc=(a,b)=>b?(a/b*100).toLocaleString('pt-BR',{maximumFractionDigits:1}):'0';
   btot.innerHTML=`<div class="bh"><span class="bi">${SV.box}</span><span class="bt">Backlog total</span>${st.grupo?`<span class="bg">${esc(st.grupo)}</span>`:''}<span class="bs">Sem crédito, fora do briefing, boni/demo e refaturamento</span></div>
   <div class="bk"><div class="k m"><small>Pedidos no backlog</small><b>${nf(D.T.n)}</b><em>${pc(D.T.n,F.n)}% do arquivo completo</em></div>
-   <div class="k m"><small>Valor do backlog</small><b>${brl(D.T.v)}</b><em>${pc(D.T.v,F.v)}% do arquivo completo</em></div></div>`}
+   <div class="k m"><small>Valor do backlog</small><b>${brl(D.T.v)}</b><em>${pc(D.T.v,F.v)}% do arquivo completo</em></div>${(()=>{if(typeof FAT==='undefined'||!FAT.length)return '';const fm=FAT.filter(r=>!st.grupo||r[2]===st.grupo),ds=[...new Set(FAT.map(r=>r[0]))].sort(),ld=ds[ds.length-1],nP=new Set(fm.filter(r=>!r[5]).map(r=>r[3])).size,vF=fm.reduce((s,r)=>s+r[4],0);const fd=fm.filter(r=>r[0]===ld),nD=new Set(fd.filter(r=>!r[5]).map(r=>r[3])).size,vD=fd.reduce((s,r)=>s+r[4],0);return `<div class="k m"><small>Faturado no dia · ${ld.slice(8,10)}/${ld.slice(5,7)}</small><b>${brl(vD)}</b><em>${nf(nD)} pedidos · ${pc(vD,vF)}% do mês</em></div><div class="k m"><small>Faturado no mês</small><b>${brl(vF)}</b><em>${nf(nP)} pedidos · ${ds.length} dias faturados · até ${ld.slice(8,10)}/${ld.slice(5,7)}</em></div>`})()}</div>`}
 function home_(){const D=data();totH(D);sideH(D);heroH(D)}
 window.home_=home_;
 const _r=render;render=function(){_r.apply(this,arguments);home_()};
