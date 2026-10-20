@@ -3268,9 +3268,10 @@ ${nomes}
   const dia = d => { if (!d) return ''; const [y, m, x] = String(d).slice(0, 10).split('-'); return x ? `${x}/${m}/${y}` : d; };
   const ini = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return p.length ? (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() : '?'; };
   const corDe = n => { let h = 0; for (const c of String(n || '')) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 62% 42%)`; };
-  const ROTAS = ['inicio', 'gestao', 'fiflow', 'kanban', 'comparativo'];
+  const ROTAS = ['inicio', 'gestao', 'fiflow', 'kanban', 'comparativo', 'cronograma'];
   const sv = (d, w) => `<svg viewBox="0 0 24 24" width="${w || 22}" height="${w || 22}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const I = {
+    navio: sv('<path d="M3 15h18l-2.5 5h-13z"/><path d="M5 15v-5h14v5M8 10V6h8v4M12 3v3"/>'),
     inicio: sv('<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'),
     gestao: sv('<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>'),
     fiflow: sv('<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>'),
@@ -3324,6 +3325,7 @@ ${nomes}
         ${nav('gestao', I.gestao, 'Gestão de Pedidos', 'Acompanhar backlog')}
         ${nav('fiflow', I.fiflow, 'Pergunte para a FIFLOW', 'Tire suas dúvidas')}
         ${nav('kanban', I.kanban, 'Kanban ADV', 'Ver solicitações')}
+        ${nav('cronograma', I.navio, 'Cronograma de Embarque', 'Importação e chegadas')}
         <div class="fs-nsep"></div><div class="fs-nlbl">Mais opções</div>
         <a href="#kanban" data-r="kanban" data-f="mim">${I.doc}<span class="tx"><span>Meus pedidos</span></span></a>
         <a href="#kanban" data-r="kanban" data-f="criados">${I.relogio}<span class="tx"><span>Acompanhamentos</span></span></a>
@@ -3340,6 +3342,7 @@ ${nomes}
         <section class="fs-view" id="vwFiflow" aria-label="Pergunte para a FIFLOW" hidden><div class="fs-hero fs-hp"><div class="fs-hin"></div></div><div class="fs-pgw"><div class="fs-chat" id="fsChatHost"></div></div></section>
         <section class="fs-view" id="vwKanban" aria-label="Kanban de acompanhamento ADV" hidden></section>
         <section class="fs-view" id="vwComp" aria-label="Análise comparativa ADV x FIFO" hidden></section>
+        <section class="fs-view" id="vwCrono" aria-label="Cronograma de Embarque" hidden></section>
       </main>
       <div class="fs-drawer" hidden role="dialog" aria-modal="true" aria-label="Pedido no Kanban"><div class="fs-dpanel"></div></div>`;
     wrap.parentNode.insertBefore(shell, wrap);
@@ -3669,6 +3672,15 @@ ${nomes}
     }
     function alertaDp(t) { let m = $('.fs-alert', dp); if (!m) { m = document.createElement('div'); m.className = 'fs-alert'; m.setAttribute('role', 'alert'); dp.prepend(m); } m.textContent = t; }
 
+    // ---------------- cronograma de embarque (Central FIFLOW em quadro próprio) ----------------
+    function cronograma() {
+      const v = $('#vwCrono', shell);
+      if (v.dataset.ok) return;
+      v.dataset.ok = '1';
+      if (!document.getElementById('fsCronoCss')) { const st = document.createElement('style'); st.id = 'fsCronoCss'; st.textContent = '.fs-crono{height:calc(100vh - 120px);min-height:680px;border-radius:18px;overflow:hidden;border:1px solid rgba(110,165,255,.45);background:#050f2b;box-shadow:0 18px 40px -18px rgba(5,23,74,.55)}.fs-crono iframe{display:block;width:100%;height:100%;border:0}.fs-cronobar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px}.fs-cronobar a{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;font-weight:600;font-size:13.5px;text-decoration:none}.fs-cronobar a:hover{background:rgba(255,255,255,.2)}.fs-cronobar span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(79,179,255,.18);color:#dbe9ff;font-size:12.5px}'; document.head.appendChild(st); }
+      v.innerHTML = `<div class="fs-hero fs-hp"><div class="fs-hin">${topo('Cronograma de Embarque')}<div class="fs-ht"><h1>Cronograma de <span>Embarque</span></h1><p>Processos de importação, chegadas por mês, pedidos vinculados e pendências, tudo num só quadro da FIFLOW.</p><div class="fs-cronobar"><span>${I.navio.replace(/width="22" height="22"/, 'width="16" height="16"')}Importação e chegadas</span><a href="cronograma.html" target="_blank" rel="noopener">Abrir em tela cheia ↗</a></div></div><img class="fs-art" src="${cfg.artFil}" alt=""></div></div><div class="fs-pgw"><div class="fs-crono"><iframe src="cronograma.html" title="Central de Controle e Indicadores FIFLOW · Cronograma de Embarque" loading="lazy"></iframe></div></div>`;
+    }
+
     // ---------------- rotas ----------------
     let atual = null;
     function ir(r, sem, opts) {
@@ -3680,13 +3692,14 @@ ${nomes}
         const on = a.dataset.r === r && (opts.f ? a.dataset.f === opts.f : opts.aba ? a.dataset.aba === opts.aba : !a.dataset.f && !a.dataset.aba);
         a.setAttribute('aria-current', on ? 'page' : 'false');
       });
-      [['inicio', 'vwInicio'], ['gestao', 'vwGestao'], ['fiflow', 'vwFiflow'], ['kanban', 'vwKanban'], ['comparativo', 'vwComp']].forEach(([k, id]) => { $('#' + id, shell).hidden = k !== r; });
+      [['inicio', 'vwInicio'], ['gestao', 'vwGestao'], ['fiflow', 'vwFiflow'], ['kanban', 'vwKanban'], ['comparativo', 'vwComp'], ['cronograma', 'vwCrono']].forEach(([k, id]) => { $('#' + id, shell).hidden = k !== r; });
       if (r === 'kanban' && opts.f) K.filtro = opts.f;
       if (r === 'inicio') inicio();
       if (r === 'gestao') { gestao(); if (opts.aba) { const b = document.getElementById({ geral: 'vtGeral', filial: 'vtFilial', ext: 'vtExt', fat: 'vtFat', sem: 'vtSem' }[opts.aba]); if (b) b.click(); } }
       if (r === 'fiflow') fiflow();
       if (r === 'kanban') kanban();
       if (r === 'comparativo') comparativo();
+      if (r === 'cronograma') cronograma();
       window.scrollTo(0, 0);
     }
     shell.addEventListener('click', e => {
